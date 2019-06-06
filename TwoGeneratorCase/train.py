@@ -35,6 +35,8 @@ dis_batch_size = 64
 #  Basic Training Parameters
 #########################################################################################
 TOTAL_BATCH = 2000
+pretrain_gen_iter = 10 # for debug
+pretrain_disc_iter = 2 # for debug
 dataset_path = "../../data/movie/"
 emb_dict_file = dataset_path + "imdb_word.vocab"
 
@@ -179,7 +181,7 @@ def main():
     generator2 = Generator(vocab_size, vocab_dict, BATCH_SIZE, EMB_DIM, HIDDEN_DIM, MAX_SEQ_LENGTH, 1)
 
     generators.append(generator2)
-    discriminator = Discriminator(sequence_length=MAX_SEQ_LENGTH, num_classes=2,
+    discriminator = Discriminator(sequence_length=MAX_SEQ_LENGTH, num_classes=3,
                                   vocab_size=vocab_size,
                                   embedding_size=dis_embedding_dim,
                                   filter_sizes=dis_filter_sizes, num_filters=dis_num_filters,
@@ -195,7 +197,7 @@ def main():
     buffer = 'Start pre-training generator...'
     print(buffer)
     log.write(buffer + '\n')
-    for epoch in range(150):  #120
+    for epoch in range(pretrain_gen_iter):  #120
         train_loss = [0,0]
         for gen_num in range(len(generators)):
             train_loss[gen_num] = pre_train_epoch(sess, generators[gen_num], pre_train_data_loader[gen_num])
@@ -209,10 +211,10 @@ def main():
     buffer = 'Start pre-training discriminator...'
     print(buffer)
     log.write(buffer)
-    for _ in range(10):   # 10
+    for _ in range(pretrain_disc_iter):   # 10
         generate_samples(sess, generators[0], 70, negative_file, vocab_list)
         generate_samples(sess, generators[1], 70, negative_file, vocab_list)
-        dis_data_loader.load_train_data([sst_pos_file_id, sst_neg_file_id], [negative_file])
+        dis_data_loader.load_train_data([sst_pos_file_id], [sst_neg_file_id], [negative_file])
         for _ in range(3):
             dis_data_loader.reset_pointer()
             for it in range(dis_data_loader.num_batch):
@@ -311,7 +313,7 @@ def main():
         for _ in range(1):
             generate_samples(sess, generators[0], 70, negative_file, vocab_list)
             generate_samples(sess, generators[1], 70, negative_file, vocab_list)
-            dis_data_loader.load_train_data([sst_pos_file_id, sst_neg_file_id], [negative_file])
+            dis_data_loader.load_train_data([sst_pos_file_id], [sst_neg_file_id], [negative_file])
             for _ in range(3):
                 dis_data_loader.reset_pointer()
                 for it in range(dis_data_loader.num_batch):

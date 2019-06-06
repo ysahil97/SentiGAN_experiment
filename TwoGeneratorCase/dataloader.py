@@ -45,10 +45,11 @@ class Dis_Data_loader():
         self.vocab_dict = vocab_dict
         self.max_sequence_length = max_sequence_length
 
-    def load_train_data(self, positive_file_list, negative_file_list):
+    def load_train_data(self, positive_file_list, negative_file_list_1, negative_file_list_2):
         # Load data
         positive_examples = []
-        negative_examples = []
+        negative_examples_1 = []
+        negative_examples_2 = []
         for positive_file in positive_file_list:
             with open(positive_file)as fin:
                 for line in fin:
@@ -56,21 +57,31 @@ class Dis_Data_loader():
                     line = line.split()
                     parse_line = [int(x) for x in line]
                     positive_examples.append(parse_line)
-        for negative_file in negative_file_list:
+        for negative_file in negative_file_list_1:
             with open(negative_file)as fin:
                 for line in fin:
                     line = line.strip()
                     line = line.split()
                     parse_line = [int(x) for x in line]
-                    negative_examples.append(parse_line)
+                    negative_examples_1.append(parse_line)
 
-        self.sentences = np.array(positive_examples + negative_examples)
+        for negative_file in negative_file_list_2:
+            with open(negative_file)as fin:
+                for line in fin:
+                    line = line.strip()
+                    line = line.split()
+                    parse_line = [int(x) for x in line]
+                    negative_examples_2.append(parse_line)
+
+
+        self.sentences = np.array(positive_examples + negative_examples_1 + negative_examples_2)
         self.sentences = self.padding(self.sentences, self.max_sequence_length)
 
         # Generate labels
-        positive_labels = [[0, 1] for _ in positive_examples]
-        negative_labels = [[1, 0] for _ in negative_examples]
-        self.labels = np.concatenate([positive_labels, negative_labels], 0)
+        positive_labels = [[0, 0, 1] for _ in positive_examples]
+        negative_labels_1 = [[0, 1, 0] for _ in negative_examples_1]
+        negative_labels_2 = [[1, 0, 0] for _ in negative_examples_2]
+        self.labels = np.concatenate([positive_labels, negative_labels_1, negative_labels_2], 0)
 
         # Shuffle the data
         shuffle_indices = np.random.permutation(np.arange(len(self.labels)))
